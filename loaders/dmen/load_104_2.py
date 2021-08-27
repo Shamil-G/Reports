@@ -1,5 +1,5 @@
 from db_oracle.connect import get_connection
-import configs.config_103_104_2 as cfg
+import config as cfg
 from openpyxl import load_workbook
 import datetime
 import os.path
@@ -62,5 +62,5 @@ def load_103_2():
 
 
 if __name__ == "__main__":
-    print("APP Load 104_2 starting")
+    print("APP TestingAdmin starting")
     load_103_2()

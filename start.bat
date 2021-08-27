@@ -1,2 +1,1 @@
-venv/Scripts/activate.bat
-python loaders/dia/load_phis.py
+python loaders/Dasorp/load_phis.py
