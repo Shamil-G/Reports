@@ -183,6 +183,8 @@ def set_status(table_name):
 if __name__ == "__main__":
     print("Начало работы программы: " + datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
     print('Файл к загрузке: ' + cfg.file)
+    cmd = 'It symbol : \' : apo'
+    print(cmd.replace('\'', '`'))
     create_table(cfg.table_name)
     load_table(cfg.table_name, cfg.file)
     create_index(cfg.table_name)
