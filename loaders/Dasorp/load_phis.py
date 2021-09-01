@@ -28,19 +28,51 @@ def create_table(table_name):
     con.close()
 
 
-# def get_last_so(iin):
-#   print('GET Last SO. iin: ' + iin)
-#   cmd = 'select * from ( '\
-#	 'select /* first_rows(1) */ '\
-#         'dl.pay_date, dl.pay_sum, dl.sicid, p.rn '\
-#         'from   person p, pmdl_doc_list dl '\
-#         'where  p.rn = \'' + iin + '\' '\ 
-#         'and    p.sicid=dl.sicid '\
-#         'order  by pay_date desc '\
-#         ') where rownum=1'
-#    print('CMD: '+cmd)
-#    con = get_connection()
-#    cursor = con.cursor()
+def set_last_so(table_name):
+    print('GET Last SO. table_name: ' + table_name)
+    cmd = 'declare '\
+        'v_sum_so number(19,2); '\
+        'v_date_so date; '\
+        'cnt pls_integer default 0; '\
+        'begin '\
+        '  for cur in ( select t.*, rownum from ' + table_name + ' t ) '\
+        '  loop '\
+        '    begin '\
+        '        cnt:=cnt+1; '\
+        '        if cnt>128 then '\
+        '           cnt:=1; '\
+        '           commit; '\
+        '        end if; '\
+        '        select pay_date, pay_sum '\
+        '        into   v_date_so, v_sum_so '\
+        '        from ( '\
+        '        select ' \
+        '               /* first_rows(1) */ ' \
+        '               dl.pay_date, dl.pay_sum '\
+        '        from   person p, pmdl_doc_list dl, pmpd_pay_doc pd '\
+        '        where  p.rn = cur.iin '\
+        '        and    pd.mhmh_id=dl.mhmh_id '\
+        '        and    p.sicid=dl.sicid '\
+        '        and    pd.cipher_id_knp in (\'012\' ,\'017\') '\
+        '        order  by pay_date desc '\
+        '        ) where rownum=1; '\
+        '        update ' + table_name + ' t '\
+        '        set t.last_so_sum=v_sum_so, '\
+        '            t.last_so_date=v_date_so '\
+        '        where t.iin=cur.iin; '\
+        '    exception when no_data_found then null; '\
+        '    end; '\
+        '  end loop; '\
+        '  commit; '\
+        'end;'
+    print('CMD: '+cmd)
+    con = get_connection()
+    cursor = con.cursor()
+    cursor.execute(cmd)
+    print("Процедура выполнена: " + datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
+    con.commit()
+    cursor.close()
+    con.close()
 
 
 def load_table(table_name, f_name):
@@ -107,7 +139,7 @@ def load_table(table_name, f_name):
 def create_index(table_name):
     con = get_connection()
     cursor = con.cursor()
-    cursor.execute('create index xn_' + table_name + 'iin on ' + table_name + ' (iin)')
+    cursor.execute('create index xn_' + table_name + 'iin on ' + table_name + ' (iin) nologging')
     cursor.close()
     con.close()
 
@@ -151,9 +183,10 @@ def set_status(table_name):
 if __name__ == "__main__":
     print("Начало работы программы: " + datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
     print('Файл к загрузке: ' + cfg.file)
-    # create_table(cfg.table_name)
-    # load_table(cfg.table_name, cfg.file)
+    create_table(cfg.table_name)
+    load_table(cfg.table_name, cfg.file)
     create_index(cfg.table_name)
+    set_last_so(cfg.table_name)
     # create_index(t_name_2)
     # set_status(t_name)
     # update_pm(t_name)
