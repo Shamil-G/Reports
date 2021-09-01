@@ -18,8 +18,8 @@ def create_table(table_name):
         print("Error import cx_Oracle :", cx_Oracle.DataError)
 
     cmd = 'create table ' + table_name + ' '\
-        '( num nvarchar2(6), id number(6), name_region nvarchar2(128), kod_ugd varchar2(4), org_name nvarchar2(128), name_plat nvarchar2(256), '\
-        'iin varchar2(12), rnn nvarchar2(12),  fio_ruk nvarchar2(128), sum_debt number(19,2), status nvarchar2(128), last_so_date date, last_so_sum number(19,2) )'
+        '( id number(6), name_region nvarchar2(128), kod_ugd varchar2(4), ugd_name nvarchar2(128), name_plat nvarchar2(256), '\
+        'iin varchar2(12), rnn nvarchar2(12),  fio_ruk nvarchar2(128), sum_debt number(19,2), last_so_date date, last_so_sum number(19,2) )'
     print('cmd: ' + cmd)
     cursor.execute(cmd)
     print("Создана таблица " + table_name)
@@ -107,13 +107,13 @@ def load_table(table_name, f_name):
             if not sheet.cell(row=i, column=1).value:
                 break
             cmd = 'insert into ' + table_name + ' ' \
-               '( num, id, name_region, kod_ugd, org_name, name_plat, '\
-               'iin, rnn,  fio_ruk, sum_debt, status, last_so_sum ) '\
+                '( id,  name_region, kod_ugd, ugd_name, name_plat, '\
+                'iin, rnn,  fio_ruk, sum_debt, last_so_sum ) '\
                 'values ( '
-            for x in range(1, 12):
+            for x in range(1, 10):
                 if isinstance(sheet.cell(row=i, column=x).value, str):
                     # print('Колонка ' + str(x) + ' : ' + sheet.cell(row=i, column=x).value )
-                    cmd = cmd + '\'' + sheet.cell(row=i, column=x).value + "', "
+                    cmd = cmd + '\'' + sheet.cell(row=i, column=x).value.replace('\'', '`') + "', "
                 # elif isinstance(sheet.cell(row=i, column=x).value, int):
                 #     numb = sheet.cell(row=i, column=x).value
                 #     cmd = cmd + '\'' + str(numb) + "', "
@@ -127,7 +127,7 @@ def load_table(table_name, f_name):
             cmd = cmd + "0 )"
             count_rows = count_rows+1
             # Для тестирования раскомментарить
-            # print(str(i) + ' : ' + cmd)
+            print(str(i) + ' : ' + cmd)
             cursor.execute(cmd)
     con.commit()
     cursor.close()
@@ -183,6 +183,8 @@ def set_status(table_name):
 if __name__ == "__main__":
     print("Начало работы программы: " + datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
     print('Файл к загрузке: ' + cfg.file)
+    cmd = 'It symbol : \' : apo'
+    print(cmd.replace('\'', '`'))
     create_table(cfg.table_name)
     load_table(cfg.table_name, cfg.file)
     create_index(cfg.table_name)
